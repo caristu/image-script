@@ -1,11 +1,20 @@
 #!/bin/bash
 
+# retrieve arguments using format argument=value
 for i in "$@"
 do
 case $i in
     -s=*|--skip-image-generation=*)
     SKIP_GENERATION="${i#*=}"
-    shift # past argument=value
+    shift
+    ;;
+    -u=*|--user=*)
+    DBUSER="${i#*=}"
+    shift
+    ;;
+    -p=*|--password=*)
+    DBPASSWORD="${i#*=}"
+    shift
     ;;
     *)
           # unknown option
@@ -13,8 +22,16 @@ case $i in
 esac
 done
 
+if [[ -z "$DBUSER" ]]; then
+	echo "[ERROR] You must provide a DB user";
+    exit;
+fi
+if [[ -z "$DBPASSWORD" ]]; then
+	echo "[ERROR] You must provide a DB password";
+    exit;
+fi
 if [[ $SKIP_GENERATION == "yes" ]]; then
-  echo "Skipping image generation. Taking images from /tmp/images..."
+  echo "Skipping image generation. Taking images from /tmp/images...";
 fi
 
 # Retrieve configuration settings
@@ -23,14 +40,10 @@ PROPS='config/script.properties';
 sourceHost=$(awk -F = '/^db.source.host/ {print $2}' $PROPS);
 sourcePort=$(awk -F = '/^db.source.port/ {print $2}' $PROPS);
 sourceSid=$(awk -F = '/^db.source.sid/ {print $2}' $PROPS);
-sourceUser=$(awk -F = '/^db.source.user/ {print $2}' $PROPS);
-sourcePassword=$(awk -F = '/^db.source.password/ {print $2}' $PROPS);
 
 destHost=$(awk -F = '/^db.destination.host/ {print $2}' $PROPS);
 destPort=$(awk -F = '/^db.destination.port/ {print $2}' $PROPS);
 destSid=$(awk -F = '/^db.destination.sid/ {print $2}' $PROPS);
-destUser=$(awk -F = '/^db.destination.user/ {print $2}' $PROPS);
-destPassword=$(awk -F = '/^db.destination.password/ {print $2}' $PROPS);
 
 imageDir=$(awk -F = '/^image.dir/ {print $2}' $PROPS);
 text=$(awk -F = '/^image.text/ {print $2}' $PROPS);
@@ -50,9 +63,9 @@ for i in "${images[@]}"
 do 
   # Getting the image from source database
   if [[ $SKIP_GENERATION != "yes" ]]; then
-    export PGPASSWORD=$sourcePassword;
+    export PGPASSWORD=$DBPASSWORD;
     echo "Exporting image "$i"..."
-    psql -h $sourceHost -p $sourcePort -U $sourceUser -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
+    psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
     read imageWidth imageHeight imageType <<< $(awk -F"|" '{print $1" "$2" "$3}' '/tmp/image.data');
     if [[ $imageType == *"/"* ]]; then
 	  read imageType <<< $(echo ${imageType} | awk -F"/" '{print $2}');
@@ -94,8 +107,8 @@ do
   convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
 
   # Importing the image into destination database
-  export PGPASSWORD=$destPassword;
+  export PGPASSWORD=$DBPASSWORD;
   echo "Importing image..."
-  psql -h $destHost -p $destPort -U $destUser -d $destSid -q -f importImage.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'" ;
+  psql -h $destHost -p $destPort -U $DBUSER -d $destSid -q -f importImage.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'" ;
   echo "Image "$i" imported successfully"
 done
