@@ -83,13 +83,13 @@ do
 	fi
 
 	# Editing the image
-  echo "Adding watermark..."
-  imageFinal="/tmp/images/"$client"/"$i"."$imageType;
-  convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
+    echo "Adding watermark..."
+    imageFinal="/tmp/images/"$client"/"$i"."$imageType;
+    convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
   else
-  	image="";
-  	imageType="";
-  	imageFiles="/tmp/images/"$client"/*";
+    image="";
+    imageType="";
+    imageFiles="/tmp/images/"$client"/*";
     for filename in $imageFiles; do
       shortname=${filename##*/}
       name=$(echo "$shortname" | cut -f 1 -d '.');
