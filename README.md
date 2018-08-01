@@ -18,7 +18,7 @@ Here we can configure:
 
 Having the properties file configured, the script can be run by executing:
 ```
-./changeLogo
+./changeLogo --user=<db_user> --password=<db_password>
 ```
 This will perform the following steps:
 1- Retrieve the images from the source database
@@ -27,10 +27,10 @@ This will perform the following steps:
 
 Once the script has been run once, the image edition step can be skipped using the --skip-image-generation parameter:
 ```
-./changeLogo --skip-image-generation=yes
+./changeLogo --user=<db_user> --password=<db_password> --skip-image-generation=yes
 ```
 or what it is the same:
 ```
-./changeLogo -s=yes
+./changeLogo -u=<db_user> -p=<db_password> -s=yes
 ```
 
