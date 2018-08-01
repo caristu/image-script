@@ -81,6 +81,11 @@ do
 	  image="/tmp/image.png";
 	  imageType="png";
 	fi
+
+	# Editing the image
+  echo "Adding watermark..."
+  imageFinal="/tmp/images/"$client"/"$i"."$imageType;
+  convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
   else
   	image="";
   	imageType="";
@@ -99,13 +104,9 @@ do
       continue;
     fi
     read imageWidth imageHeight <<< $(identify -format "%[fx:w]|%[fx:h]" $image | awk -F"|" '{print $1" "$2}');
+    imageFinal="/tmp/images/"$client"/"$i"."$imageType;
   fi
   echo "Image data: size = "$imageWidth"x"$imageHeight" format = $imageType";
-
-  # Editing the image
-  echo "Adding watermark..."
-  imageFinal="/tmp/images/"$client"/"$i"."$imageType;
-  convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
 
   # Importing the image into destination database
   export PGPASSWORD=$DBPASSWORD;
