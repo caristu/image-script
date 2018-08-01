@@ -54,7 +54,7 @@ borderColor=$(awk -F = '/^image.font.bordercolor/ {print $2}' $PROPS);
 
 client=$(awk -F = '/^openbravo.client/ {print $2}' $PROPS);
 
-mkdir -p /tmp/images;
+mkdir -p "/tmp/images/"$client;
 
 declare -a images=("your_company_menu_image" "your_company_document_image" "your_company_big_image" "em_obpos_company_login_image"
 	               "si_your_company_login_image" "si_your_company_menu_image" "si_your_company_big_image" "si_your_company_document_image");
@@ -84,12 +84,13 @@ do
   else
   	image="";
   	imageType="";
-    for filename in /tmp/images/*; do
-      name=${filename##*/}
-      name=$(echo "$name" | cut -f 1 -d '.');
+  	imageFiles="/tmp/images/"$client"/*";
+    for filename in $imageFiles; do
+      shortname=${filename##*/}
+      name=$(echo "$shortname" | cut -f 1 -d '.');
       if [[ $name == $i ]]; then
       	image=$filename;
-        imageType=$(echo "$name" | cut -f 2 -d '.');
+        imageType=$(echo "$shortname" | cut -f 2 -d '.');
         break;
       fi
     done
@@ -103,7 +104,7 @@ do
 
   # Editing the image
   echo "Adding watermark..."
-  imageFinal="/tmp/images/"$i"."$imageType;
+  imageFinal="/tmp/images/"$client"/"$i"."$imageType;
   convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
 
   # Importing the image into destination database
