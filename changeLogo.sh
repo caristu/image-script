@@ -45,7 +45,6 @@ destHost=$(awk -F = '/^db.destination.host/ {print $2}' $PROPS);
 destPort=$(awk -F = '/^db.destination.port/ {print $2}' $PROPS);
 destSid=$(awk -F = '/^db.destination.sid/ {print $2}' $PROPS);
 
-imageDir=$(awk -F = '/^image.dir/ {print $2}' $PROPS);
 text=$(awk -F = '/^image.text/ {print $2}' $PROPS);
 font=$(awk -F = '/^image.font.type/ {print $2}' $PROPS);
 fontSize=$(awk -F = '/^image.font.size/ {print $2}' $PROPS);
