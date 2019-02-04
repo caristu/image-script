@@ -76,21 +76,21 @@ do
     psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
     read imageWidth imageHeight imageType <<< $(awk -F"|" '{print $1" "$2" "$3}' '/tmp/image.data');
     if [[ $imageType == *"/"* ]]; then
-	  read imageType <<< $(echo ${imageType} | awk -F"/" '{print $2}');
-	  if [[ $imageType == "svg+xml" ]]; then
-		imageType="svg";
-	  fi
+      read imageType <<< $(echo ${imageType} | awk -F"/" '{print $2}');
+      if [[ $imageType == "svg+xml" ]]; then
+        imageType="svg";
+      fi
     fi
     image="/tmp/image."$imageType;
     xxd -p -r /tmp/image.hex > $image;
     if [[ $imageType == "svg" ]]; then
       # to avoid problems with svg format when adding the watermark
-	  convert $image /tmp/image.png;
-	  image="/tmp/image.png";
-	  imageType="png";
-	fi
+      convert $image /tmp/image.png;
+      image="/tmp/image.png";
+      imageType="png";
+    fi
 
-	# Editing the image
+    # Editing the image
     echo "Adding watermark..."
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
     convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
