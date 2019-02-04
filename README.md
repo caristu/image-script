@@ -20,7 +20,7 @@ Having the properties file configured, the script can be run by executing:
 ```
 ./changeLogo --user=<db_user> --password=<db_password>
 ```
-This will perform the following steps:
+This will perform the following steps:<br/>
 1- Retrieve the images from the source database<br/>
 2- Edit the images and watermark them, placing the resulting images in the /tmp/images folder<br/>
 3- Import the edited images into the destination database<br/>
