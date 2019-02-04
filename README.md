@@ -21,9 +21,9 @@ Having the properties file configured, the script can be run by executing:
 ./changeLogo --user=<db_user> --password=<db_password>
 ```
 This will perform the following steps:
-1- Retrieve the images from the source database
-2- Edit the images and watermark them, placing the resulting images in the /tmp/images folder
-3- Import the edited images into the destination database
+1- Retrieve the images from the source database<br/>
+2- Edit the images and watermark them, placing the resulting images in the /tmp/images folder<br/>
+3- Import the edited images into the destination database<br/>
 
 Once the script has been run once, the image edition step can be skipped using the --skip-image-generation parameter:
 ```
@@ -33,4 +33,11 @@ or what it is the same:
 ```
 ./changeLogo -u=<db_user> -p=<db_password> -s=yes
 ```
+It is also possible to skip the importing step and instead generate a .sql script with the statements for importing the images:
+```
+./changeLogo --user=<db_user> --password=<db_password> --import-images=no
+```
+or equivalently:
+```
+./changeLogo --user=<db_user> --password=<db_password> -i=no
 

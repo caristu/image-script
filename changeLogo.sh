@@ -8,6 +8,10 @@ case $i in
     SKIP_GENERATION="${i#*=}"
     shift
     ;;
+    -i=*|--import-images=*)
+    IMPORT_IMAGES="${i#*=}"
+    shift
+    ;;
     -u=*|--user=*)
     DBUSER="${i#*=}"
     shift
@@ -33,6 +37,9 @@ fi
 if [[ $SKIP_GENERATION == "yes" ]]; then
   echo "Skipping image generation. Taking images from /tmp/images...";
 fi
+if [[ $IMPORT_IMAGES == "no" ]]; then
+  rm -f $importScriptFile;
+fi
 
 # Retrieve configuration settings
 echo "Reading properties..."
@@ -52,6 +59,8 @@ color=$(awk -F = '/^image.font.color/ {print $2}' $PROPS);
 borderColor=$(awk -F = '/^image.font.bordercolor/ {print $2}' $PROPS);
 
 client=$(awk -F = '/^openbravo.client/ {print $2}' $PROPS);
+
+importScriptFile=$(awk -F = '/^import.script.file/ {print $2}' $PROPS);
 
 mkdir -p "/tmp/images/"$client;
 
@@ -107,9 +116,19 @@ do
   fi
   echo "Image data: size = "$imageWidth"x"$imageHeight" format = $imageType";
 
-  # Importing the image into destination database
-  export PGPASSWORD=$DBPASSWORD;
-  echo "Importing image..."
-  psql -h $destHost -p $destPort -U $DBUSER -d $destSid -q -f importImage.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'" ;
-  echo "Image "$i" imported successfully"
+  if [[ $IMPORT_IMAGES == "no" ]]; then
+    # Generating script for importing images
+    export PGPASSWORD=$DBPASSWORD;
+    psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f createImportImagesScript.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'" >> $importScriptFile 2>&1;
+  else
+    # Importing the image into destination database
+    export PGPASSWORD=$DBPASSWORD;
+    echo "Importing image...";
+    psql -h $destHost -p $destPort -U $DBUSER -d $destSid -q -f importImage.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'";
+    echo "Image "$i" imported successfully";
+  fi
 done
+if [[ $IMPORT_IMAGES == "no" ]]; then
+  sed -e s/psql:createImportImagesScript.sql:46:[[:blank:]]NOTICE:[[:blank:]][[:blank:]]//g -i $importScriptFile;
+  echo "Script for image importing created: "$importScriptFile"";
+fi
