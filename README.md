@@ -41,3 +41,5 @@ or equivalently:
 ```
 ./changeLogo --user=<db_user> --password=<db_password> -i=no
 
+Note that the location of the script file should be specified in the properties file.
+
