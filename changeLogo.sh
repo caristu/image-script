@@ -110,7 +110,7 @@ do
     echo "Adding watermark..."
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
     convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
-  else
+  elif [[ $READ_MODE == "imagefile" ]]; then
     image="";
     imageType="";
     imageFiles="/tmp/images/"$client"/*";
@@ -129,6 +129,9 @@ do
     fi
     read imageWidth imageHeight <<< $(identify -format "%[fx:w]|%[fx:h]" $image | awk -F"|" '{print $1" "$2}');
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
+  else
+    echo "Unsupported read mode "$READ_MODE;
+    exit;
   fi
   echo "Image data: size = "$imageWidth"x"$imageHeight" format = "$imageType;
 
