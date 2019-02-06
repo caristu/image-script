@@ -7,7 +7,9 @@ declare
   table_name character varying(30);
   mimetype character varying(255);
   with_options character varying(20);
+  file_path character varying(255);
 begin
+  file_path = '/tmp/' || image_column;
   if substring(image_column, 1, 3) = 'si_' then
     image_column = substring(image_column, 4);
     table_name = 'ad_system_info';
@@ -27,10 +29,10 @@ begin
   -- export image information
   EXECUTE FORMAT('COPY (select encode(binarydata,''hex'') from ad_image where ad_image_id = 
 	   (select %I from %I where ad_client_id = %L))
-  TO ''/tmp/image.hex'' %s', image_column, table_name, client, with_options);
+  TO ''%s.hex'' %s', image_column, table_name, client, file_path, with_options);
 
   -- export image metadata
   EXECUTE FORMAT('COPY (select width, height, mimetype from ad_image where ad_image_id = 
 	   (select %I from %I where ad_client_id = %L))
-  TO ''/tmp/image.data'' (DELIMITER ''|'')', image_column, table_name, client);
+  TO ''%s.data'' (DELIMITER ''|'')', image_column, table_name, client, file_path);
 end$$;

@@ -8,6 +8,10 @@ case $i in
     SKIP_GENERATION="${i#*=}"
     shift
     ;;
+    -r=*|--read-images-only=*)
+    READ_ONLY="${i#*=}"
+    shift
+    ;;
     -i=*|--import-images=*)
     IMPORT_IMAGES="${i#*=}"
     shift
@@ -70,19 +74,27 @@ declare -a images=("your_company_menu_image" "your_company_document_image" "your
 for i in "${images[@]}" 
 do 
   # Getting the image from source database
-  if [[ $SKIP_GENERATION != "yes" ]]; then
+  if [[ $SKIP_GENERATION != "yes" || $READ_ONLY == "yes" ]]; then
     export PGPASSWORD=$DBPASSWORD;
-    echo "Exporting image "$i"..."
+    echo "Exporting image "$i"...";
     psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
-    read imageWidth imageHeight imageType <<< $(awk -F"|" '{print $1" "$2" "$3}' '/tmp/image.data');
+    imageData="/tmp/"$i".data";
+    read imageWidth imageHeight imageType <<< $(awk -F"|" '{print $1" "$2" "$3}' $imageData);
     if [[ $imageType == *"/"* ]]; then
       read imageType <<< $(echo ${imageType} | awk -F"/" '{print $2}');
       if [[ $imageType == "svg+xml" ]]; then
         imageType="svg";
       fi
     fi
+
+    if [[ $READ_ONLY == "yes" ]]; then
+      echo "Skipping generation of image "$i"...";
+      continue;
+    fi
+
     image="/tmp/image."$imageType;
-    xxd -p -r /tmp/image.hex > $image;
+    imageInfo="/tmp/"$i".hex";
+    xxd -p -r $imageInfo > $image;
     if [[ $imageType == "svg" ]]; then
       # to avoid problems with svg format when adding the watermark
       convert $image /tmp/image.png;
