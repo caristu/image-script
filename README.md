@@ -21,11 +21,17 @@ Having the properties file configured, the script can be run by executing:
 ./changeLogo --user=<db_user> --password=<db_password>
 ```
 This will perform the following steps:<br/>
-1- Retrieve the images from the source database<br/>
+1- Retrieve the images<br/>
 2- Edit the images and watermark them, placing the resulting images in the /tmp/images folder<br/>
 3- Import the edited images into the destination database<br/>
 
-Once the script has been run once, the image edition step can be skipped using the --skip-image-generation parameter:
+Step 1) can be executed in different ways depending on the value provided by the --read-mode parameter:
+
+- <b>db</b>: retrieve the images from the source database.
+- imagefile: retrieves the images from the local computer. This mode is useful once the script has been run once with the db mode, to avoid executing the edition part.
+- readonly: it just reads the images from the source database and generates the data files. The edition and import processes are skipped.
+- datafile: it generates the images from data files. To execute this mode, previously the data files should be generated using the readonly mode.
+
 ```
 ./changeLogo --user=<db_user> --password=<db_password> --skip-image-generation=yes
 ```
