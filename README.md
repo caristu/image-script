@@ -25,6 +25,8 @@ This will perform the following steps:<br/>
 2- Edit the images and watermark them, placing the resulting images in the /tmp/images folder<br/>
 3- Import the edited images into the destination database<br/>
 
+### Read Modes
+
 Step 1) can be executed in different ways depending on the value provided by the --read-mode parameter:
 
 - <b>db</b>: retrieve the images from the source database.
@@ -41,6 +43,9 @@ or what it is the same:
 ```
 ./changeLogo -u=<db_user> -p=<db_password> -r=db
 ```
+
+### Generating Import Script
+
 It is also possible to skip the importing step and instead generate a .sql script with the statements for importing the images:
 ```
 ./changeLogo --user=<db_user> --password=<db_password> --import-images=no
