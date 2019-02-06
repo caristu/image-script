@@ -4,12 +4,8 @@
 for i in "$@"
 do
 case $i in
-    -s=*|--skip-image-generation=*)
-    SKIP_GENERATION="${i#*=}"
-    shift
-    ;;
-    -r=*|--read-images-only=*)
-    READ_ONLY="${i#*=}"
+    -r=*|--read-mode=*)
+    READ_MODE="${i#*=}"
     shift
     ;;
     -i=*|--import-images=*)
@@ -38,7 +34,9 @@ if [[ -z "$DBPASSWORD" ]]; then
 	echo "[ERROR] You must provide a DB password";
     exit;
 fi
-if [[ $SKIP_GENERATION == "yes" ]]; then
+if [[ -z "$READ_MODE" ]]; then
+  READ_MODE="db";
+elif [[ $READ_MODE == "imagefile" ]]; then
   echo "Skipping image generation. Taking images from /tmp/images...";
 fi
 if [[ $IMPORT_IMAGES == "no" ]]; then
@@ -74,10 +72,16 @@ declare -a images=("your_company_menu_image" "your_company_document_image" "your
 for i in "${images[@]}" 
 do 
   # Getting the image from source database
-  if [[ $SKIP_GENERATION != "yes" || $READ_ONLY == "yes" ]]; then
-    export PGPASSWORD=$DBPASSWORD;
-    echo "Exporting image "$i"...";
-    psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
+  if [[ $READ_MODE == "db" || $READ_MODE == "readonly" || $READ_MODE == "datafile" ]]; then
+
+    if [[ $READ_MODE == "datafile" ]]; then
+      echo "Retrieving image from data file...";
+    else
+      export PGPASSWORD=$DBPASSWORD;
+      echo "Exporting image "$i"...";
+      psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
+    fi
+
     imageData="/tmp/"$i".data";
     read imageWidth imageHeight imageType <<< $(awk -F"|" '{print $1" "$2" "$3}' $imageData);
     if [[ $imageType == *"/"* ]]; then
@@ -87,11 +91,11 @@ do
       fi
     fi
 
-    if [[ $READ_ONLY == "yes" ]]; then
+    if [[ $READ_MODE == "readonly" ]]; then
       echo "Skipping generation of image "$i"...";
       continue;
     fi
-
+  
     image="/tmp/image."$imageType;
     imageInfo="/tmp/"$i".hex";
     xxd -p -r $imageInfo > $image;
@@ -126,7 +130,7 @@ do
     read imageWidth imageHeight <<< $(identify -format "%[fx:w]|%[fx:h]" $image | awk -F"|" '{print $1" "$2}');
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
   fi
-  echo "Image data: size = "$imageWidth"x"$imageHeight" format = $imageType";
+  echo "Image data: size = "$imageWidth"x"$imageHeight" format = "$imageType;
 
   if [[ $IMPORT_IMAGES == "no" ]]; then
     # Generating script for importing images
