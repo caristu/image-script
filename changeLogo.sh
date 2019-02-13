@@ -21,7 +21,7 @@ case $i in
     shift
     ;;
     *)
-          # unknown option
+    # unknown option
     ;;
 esac
 done
@@ -61,13 +61,18 @@ color=$(awk -F = '/^image.font.color/ {print $2}' $PROPS);
 borderColor=$(awk -F = '/^image.font.bordercolor/ {print $2}' $PROPS);
 
 client=$(awk -F = '/^openbravo.client/ {print $2}' $PROPS);
+retail=$(awk -F = '/^openbravo.retail/ {print $2}' $PROPS);
 
 importScriptFile=$(awk -F = '/^import.script.file/ {print $2}' $PROPS);
 
 mkdir -p "/tmp/images/"$client;
 
-declare -a images=("your_company_menu_image" "your_company_document_image" "your_company_big_image" "em_obpos_company_login_image"
-	               "si_your_company_login_image" "si_your_company_menu_image" "si_your_company_big_image" "si_your_company_document_image");
+declare -a images=("your_company_menu_image" "your_company_document_image" "your_company_big_image" "si_your_company_login_image"
+                   "si_your_company_menu_image" "si_your_company_big_image" "si_your_company_document_image");
+
+if [[ $retail == "yes" ]]; then
+  images+=("em_obpos_company_login_image");
+fi
 
 for i in "${images[@]}" 
 do 
