@@ -39,9 +39,6 @@ if [[ -z "$READ_MODE" ]]; then
 elif [[ $READ_MODE == "imagefile" ]]; then
   echo "Skipping image generation. Taking images from /tmp/images...";
 fi
-if [[ $IMPORT_IMAGES == "no" ]]; then
-  rm -f $importScriptFile;
-fi
 
 # Retrieve configuration settings
 echo "Reading properties..."
@@ -65,7 +62,12 @@ retail=$(awk -F = '/^openbravo.retail/ {print $2}' $PROPS);
 
 importScriptFile=$(awk -F = '/^import.script.file/ {print $2}' $PROPS);
 
+if [[ $IMPORT_IMAGES == "no" ]]; then
+  rm -f $importScriptFile;
+fi
+
 mkdir -p "/tmp/images/"$client;
+rm "/tmp/images/"$client/*;
 
 declare -a images=("your_company_menu_image" "your_company_document_image" "your_company_big_image" "si_your_company_login_image"
                    "si_your_company_menu_image" "si_your_company_big_image" "si_your_company_document_image");
