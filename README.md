@@ -32,7 +32,7 @@ Step 1) can be executed in different ways depending on the value provided by the
 - <b>db</b>: retrieve the images from the source database.
 - <b>readonly</b>: it just reads the images from the source database and generates the data files. The edition and import processes are skipped.
 - <b>datafile</b>: it generates the images from data files. To execute this mode, previously the data files should be generated using the <i>readonly</i> mode.
-- <b>imagefile</b>: retrieves the images from the local computer. This mode is useful once the script has been run once with the <i>db</i> or <i>datafile</i> modes, to avoid executing the edition part.
+- <b>imagefile</b>: retrieves the images from the local computer. This mode is useful once the script has been run once with the <i>db</i> or <i>datafile</i> modes, to avoid executing the edition part (Step 2).
 
 Example:
 
@@ -46,7 +46,7 @@ or what it is the same:
 
 ### Generating Import Script
 
-It is also possible to skip the importing step and instead generate a .sql script with the statements for importing the images:
+It is also possible to skip the importing step (Step 3) and instead generate a .sql script with the statements for importing the images:
 ```
 ./changeLogo --user=<db_user> --password=<db_password> --import-images=script
 ```
