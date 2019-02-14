@@ -48,11 +48,17 @@ or what it is the same:
 
 It is also possible to skip the importing step and instead generate a .sql script with the statements for importing the images:
 ```
-./changeLogo --user=<db_user> --password=<db_password> --import-images=no
+./changeLogo --user=<db_user> --password=<db_password> --import-images=script
 ```
 or equivalently:
 ```
-./changeLogo --user=<db_user> --password=<db_password> -i=no
+./changeLogo --user=<db_user> --password=<db_password> -i=script
 
 Note that the location of the script file should be specified in the properties file.
+
+```
+In the same manner, it is also possible to completely skip the import part:
+```
+./changeLogo --user=<db_user> --password=<db_password> -i=no
+```
 
