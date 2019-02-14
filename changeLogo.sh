@@ -36,8 +36,6 @@ if [[ -z "$DBPASSWORD" ]]; then
 fi
 if [[ -z "$READ_MODE" ]]; then
   READ_MODE="db";
-elif [[ $READ_MODE == "imagefile" ]]; then
-  echo "Skipping image generation. Taking images from /tmp/images...";
 fi
 
 # Retrieve configuration settings
@@ -62,12 +60,17 @@ retail=$(awk -F = '/^openbravo.retail/ {print $2}' $PROPS);
 
 importScriptFile=$(awk -F = '/^import.script.file/ {print $2}' $PROPS);
 
+mkdir -p "/tmp/images/"$client;
+
 if [[ $IMPORT_IMAGES == "no" ]]; then
   rm -f $importScriptFile;
 fi
 
-mkdir -p "/tmp/images/"$client;
-rm "/tmp/images/"$client/*;
+if [[ $READ_MODE == "imagefile" ]]; then
+  echo "Skipping image generation. Taking images from /tmp/images/"$client"...";
+else
+  rm -f "/tmp/images/"$client/*;
+fi
 
 declare -a images=("your_company_menu_image" "your_company_document_image" "your_company_big_image" "si_your_company_login_image"
                    "si_your_company_menu_image" "si_your_company_big_image" "si_your_company_document_image");
@@ -77,13 +80,13 @@ if [[ $retail == "yes" ]]; then
 fi
 
 for i in "${images[@]}" 
-do 
-  # Getting the image from source database
+do
   if [[ $READ_MODE == "db" || $READ_MODE == "readonly" || $READ_MODE == "datafile" ]]; then
 
     if [[ $READ_MODE == "datafile" ]]; then
       echo "Retrieving image from data file...";
     else
+      # Getting the image from source database
       export PGPASSWORD=$DBPASSWORD;
       echo "Exporting image "$i"...";
       psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f exportImage.sql -v v1="'"$i"'" -v v2="'"$client"'" ;
