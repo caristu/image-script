@@ -37,6 +37,9 @@ fi
 if [[ -z "$READ_MODE" ]]; then
   READ_MODE="db";
 fi
+if [[ -z "$IMPORT_IMAGES" ]]; then
+  IMPORT_IMAGES="yes";
+fi
 
 # Retrieve configuration settings
 echo "Reading properties..."
@@ -60,15 +63,16 @@ retail=$(awk -F = '/^openbravo.retail/ {print $2}' $PROPS);
 
 importScriptFile=$(awk -F = '/^import.script.file/ {print $2}' $PROPS);
 
-mkdir -p "/tmp/images/"$client;
-
-if [[ $IMPORT_IMAGES == "no" ]]; then
+if [[ $IMPORT_IMAGES == "script" ]]; then
   rm -f $importScriptFile;
 fi
 
 if [[ $READ_MODE == "imagefile" ]]; then
   echo "Skipping image generation. Taking images from /tmp/images/"$client"...";
+elif [[ $READ_MODE == "readonly" ]]; then
+  echo "Skipping generation and importation of images. Generating data files in /tmp...";
 else
+  mkdir -p "/tmp/images/"$client;
   rm -f "/tmp/images/"$client/*;
 fi
 
@@ -102,7 +106,6 @@ do
     fi
 
     if [[ $READ_MODE == "readonly" ]]; then
-      echo "Skipping generation of image "$i"...";
       continue;
     fi
   
@@ -120,8 +123,11 @@ do
     echo "Adding watermark..."
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
     convert -pointsize ${fontSize} -font ${font} -gravity center -draw "fill ${borderColor} text 0,0 ${text} fill ${color} text 1,1 ${text}" $image $imageFinal;
+
+    echo $(identify -format "%[fx:w]|%[fx:h]" $imageFinal | awk -F"|" '{print $1" "$2}') > "/tmp/images/"$client"/"$i".size";
   elif [[ $READ_MODE == "imagefile" ]]; then
     image="";
+    sizeFile="";
     imageType="";
     imageFiles="/tmp/images/"$client"/*";
     for filename in $imageFiles; do
@@ -130,6 +136,7 @@ do
       if [[ $name == $i ]]; then
       	image=$filename;
         imageType=$(echo "$shortname" | cut -f 2 -d '.');
+        sizeFile=$(echo "$filename" | cut -f 1 -d '.')".size";
         break;
       fi
     done
@@ -137,7 +144,11 @@ do
       echo "[WARN] Image "$i" not found.";
       continue;
     fi
-    read imageWidth imageHeight <<< $(identify -format "%[fx:w]|%[fx:h]" $image | awk -F"|" '{print $1" "$2}');
+    if [[ ! -f $sizeFile ]]; then
+      read imageWidth imageHeight <<< $(identify -format "%[fx:w]|%[fx:h]" $image | awk -F"|" '{print $1" "$2}');
+    else
+      read imageWidth imageHeight <<< $(cat $sizeFile);
+    fi
     imageFinal="/tmp/images/"$client"/"$i"."$imageType;
   else
     echo "Unsupported read mode "$READ_MODE;
@@ -145,19 +156,21 @@ do
   fi
   echo "Image data: size = "$imageWidth"x"$imageHeight" format = "$imageType;
 
-  if [[ $IMPORT_IMAGES == "no" ]]; then
+  if [[ $IMPORT_IMAGES == "script" ]]; then
     # Generating script for importing images
     export PGPASSWORD=$DBPASSWORD;
     psql -h $sourceHost -p $sourcePort -U $DBUSER -d $sourceSid -q -f createImportImagesScript.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'" >> $importScriptFile 2>&1;
-  else
+  elif [[ $IMPORT_IMAGES == "yes" ]]; then
     # Importing the image into destination database
     export PGPASSWORD=$DBPASSWORD;
     echo "Importing image...";
     psql -h $destHost -p $destPort -U $DBUSER -d $destSid -q -f importImage.sql -v v1="'"$imageFinal"'" -v v2=$imageWidth -v v3=$imageHeight -v v4=$imageType -v v5="'"$i"'" -v v6="'"$client"'";
     echo "Image "$i" imported successfully";
+  else
+    echo "Skipping importing of image "$i;
   fi
 done
-if [[ $IMPORT_IMAGES == "no" ]]; then
+if [[ $IMPORT_IMAGES == "script" ]]; then
   sed -e s/psql:createImportImagesScript.sql:46:[[:blank:]]NOTICE:[[:blank:]][[:blank:]]//g -i $importScriptFile;
   echo "Script for image importing created: "$importScriptFile"";
 fi
